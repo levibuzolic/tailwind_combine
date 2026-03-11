@@ -1,11 +1,20 @@
 defmodule TailwindMerge do
   @moduledoc """
-  Provides utility function to efficiently merge Tailwind CSS classes in Elixir
-  without style conflicts.
+  Merge Tailwind CSS classes in Elixir without style conflicts.
 
   ## Usage
 
-  To use this package, define a helper module in your project:
+  Use the default Tailwind config directly:
+
+      TailwindMerge.merge("p-2 p-4")
+      # "p-4"
+
+  Nested class lists are also supported:
+
+      TailwindMerge.merge(["p-2", nil, ["hover:p-2", "hover:p-4"]])
+      # "p-2 hover:p-4"
+
+  To create a dedicated helper module, define one in your project:
 
       defmodule DemoWeb.ClassHelper do
         use TailwindMerge
@@ -42,6 +51,14 @@ defmodule TailwindMerge do
   alias TailwindMerge.Config
   alias TailwindMerge.Class
   alias TailwindMerge.ClassGroup
+  alias TailwindMerge.DefaultClassGroup
+
+  defmodule DefaultClassGroup do
+    @moduledoc false
+
+    @config Config.new()
+    @before_compile ClassGroup
+  end
 
   defmacro __using__(opts) do
     config = Keyword.get_lazy(opts, :config, fn -> Macro.escape(Config.new()) end)
@@ -63,15 +80,23 @@ defmodule TailwindMerge do
     end
   end
 
+  @doc """
+  Merges Tailwind CSS classes using the default TailwindMerge config.
+  """
+  @spec merge(binary() | list()) :: binary()
+  def merge(classes), do: merge(classes, DefaultClassGroup)
+
   @doc false
   def merge(classes, class_group_module) when is_list(classes) do
-    classes = Enum.join(classes, " ")
-    merge(classes, class_group_module)
+    classes
+    |> normalize_class_values()
+    |> merge(class_group_module)
   end
 
   def merge(classes, class_group_module) when is_binary(classes) do
-    classes
-    |> String.trim()
+    normalized_classes = normalize_class_values(classes)
+
+    normalized_classes
     |> split_classes()
     |> Enum.map(&Class.new(&1, class_group_module))
     |> clean_classes(class_group_module)
@@ -82,31 +107,53 @@ defmodule TailwindMerge do
     Regex.split(~r/\s+/, classes)
   end
 
+  defp flatten_class_values(classes) do
+    Enum.flat_map(classes, fn
+      nil -> []
+      false -> []
+      "" -> []
+      class when is_binary(class) -> [class]
+      nested when is_list(nested) -> flatten_class_values(nested)
+      _other -> []
+    end)
+  end
+
+  defp normalize_class_values(classes) when is_binary(classes), do: String.trim(classes)
+
+  defp normalize_class_values(classes) when is_list(classes) do
+    classes
+    |> flatten_class_values()
+    |> Enum.join(" ")
+    |> String.trim()
+  end
+
   defp clean_classes(classes, class_group_module) do
     classes
     |> Enum.reverse()
-    |> handle_related_classes()
     |> handle_conflicting_classes(class_group_module)
     |> Enum.reverse()
   end
 
-  defp handle_related_classes(classes) do
-    Enum.uniq_by(classes, fn %Class{} = class ->
-      {class.group, class.modifiers}
-    end)
-  end
-
   defp handle_conflicting_classes(classes, class_group_module) do
     classes
-    |> Enum.reduce({[], []}, fn %Class{} = class, {classes, conflicts} ->
-      conflict = {class.group, class.modifiers}
-
-      if Enum.member?(conflicts, conflict) do
-        {classes, conflicts}
+    |> Enum.reduce({[], MapSet.new()}, fn %Class{} = class, {classes, conflicts} ->
+      if is_nil(class.group) do
+        {[class | classes], conflicts}
       else
-        conflicting_groups = apply(class_group_module, :get_conflicting_groups, [class.group])
-        new_conflicts = Enum.map(conflicting_groups, &{&1, class.modifiers})
-        {[class | classes], conflicts ++ new_conflicts}
+        modifier_id = Class.modifier_id(class, class_group_module)
+        class_id = modifier_id <> class.group
+
+        if MapSet.member?(conflicts, class_id) do
+          {classes, conflicts}
+        else
+          conflicting_groups =
+            apply(class_group_module, :get_conflicting_groups, [class.group, !!class.postfix])
+
+          new_conflicts = Enum.map(conflicting_groups, &(modifier_id <> &1))
+
+          {[class | classes],
+           Enum.reduce([class_id | new_conflicts], conflicts, &MapSet.put(&2, &1))}
+        end
       end
     end)
     |> elem(0)
