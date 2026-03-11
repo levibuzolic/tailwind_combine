@@ -42,9 +42,24 @@ defmodule TailwindMerge.ClassGroup do
     conflicting_fun =
       quote do
         @conflicting_class_groups Map.new(unquote(config.conflicting_class_groups))
-        def get_conflicting_groups(class) do
-          Map.get(@conflicting_class_groups, class, [])
+        @conflicting_class_group_modifiers Map.new(
+                                             unquote(config.conflicting_class_group_modifiers)
+                                           )
+        @order_sensitive_modifiers unquote(config.order_sensitive_modifiers)
+        @prefix unquote(config.prefix)
+
+        def get_conflicting_groups(class, has_postfix_modifier \\ false) do
+          base_groups = Map.get(@conflicting_class_groups, class, [])
+
+          if has_postfix_modifier do
+            base_groups ++ Map.get(@conflicting_class_group_modifiers, class, [])
+          else
+            base_groups
+          end
         end
+
+        def get_order_sensitive_modifiers, do: @order_sensitive_modifiers
+        def get_prefix, do: @prefix
       end
 
     [

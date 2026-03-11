@@ -5,7 +5,13 @@ defmodule TailwindMerge.Config do
 
   alias TailwindMerge.Validator
 
-  defstruct [:class_groups, :conflicting_class_groups]
+  defstruct [
+    :prefix,
+    :class_groups,
+    :conflicting_class_groups,
+    :conflicting_class_group_modifiers,
+    :order_sensitive_modifiers
+  ]
 
   def new(opts \\ []) do
     class_groups =
@@ -22,13 +28,32 @@ defmodule TailwindMerge.Config do
         fn -> conflicting_class_groups() end
       )
 
+    conflicting_class_group_modifiers =
+      Keyword.get_lazy(
+        opts,
+        :conflicting_class_group_modifiers,
+        fn -> conflicting_class_group_modifiers() end
+      )
+
+    order_sensitive_modifiers =
+      Keyword.get_lazy(
+        opts,
+        :order_sensitive_modifiers,
+        fn -> order_sensitive_modifiers() end
+      )
+
+    prefix = Keyword.get(opts, :prefix)
+
     %__MODULE__{
+      prefix: prefix,
       class_groups: class_groups,
-      conflicting_class_groups: conflicting_class_groups
+      conflicting_class_groups: conflicting_class_groups,
+      conflicting_class_group_modifiers: conflicting_class_group_modifiers,
+      order_sensitive_modifiers: order_sensitive_modifiers
     }
   end
 
-  @positions ~w(bottom center left left-bottom left-top right right-bottom right-top top)
+  @positions ~w(bottom bottom-left bottom-right center left left-bottom left-top right right-bottom right-top top top-left top-right)
   @overflow ~w(auto hidden clip visible scroll)
   @overscroll ~w(auto contain none)
 
@@ -39,7 +64,7 @@ defmodule TailwindMerge.Config do
       # Layout
       {"aspect-ratio",
        [
-         {"aspect", ["auto", "square", "video", {Validator, :arbitrary?}]}
+         {"aspect", ["auto", "square", "video", {Validator, :ratio?}, {Validator, :arbitrary?}]}
        ]},
       {"container",
        [
@@ -79,11 +104,11 @@ defmodule TailwindMerge.Config do
        ~w(block inline-block inline flex inline-flex table inline-table table-caption table-cell table-column table-column-group table-footer-group table-header-group table-row-group table-row flow-root grid inline-grid contents list-item hidden)},
       {"floats",
        [
-         {"float", ~w(right left none)}
+         {"float", ~w(right left none start end)}
        ]},
       {"clear",
        [
-         {"clear", ~w(left right both none)}
+         {"clear", ~w(left right both none start end)}
        ]},
       {"isolation", ~w(isolate isolation-auto)},
       {"object-fit",
@@ -174,9 +199,57 @@ defmodule TailwindMerge.Config do
             {Validator, :arbitrary?}
           ]}
        ]},
+      {"inset-s",
+       [
+         {"inset-s",
+          [
+            "px",
+            "auto",
+            "full",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
       {"inset-inline-end",
        [
          {"end",
+          [
+            "px",
+            "auto",
+            "full",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"inset-e",
+       [
+         {"inset-e",
+          [
+            "px",
+            "auto",
+            "full",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"inset-bs",
+       [
+         {"inset-bs",
+          [
+            "px",
+            "auto",
+            "full",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"inset-be",
+       [
+         {"inset-be",
           [
             "px",
             "auto",
@@ -291,7 +364,8 @@ defmodule TailwindMerge.Config do
       {"grid-column",
        [
          "col-auto",
-         {"col-span", ["full", {Validator, :integer?}, {Validator, :arbitrary?}]}
+         {"col-span", ["full", {Validator, :integer?}, {Validator, :arbitrary?}]},
+         {"col", ["auto", {Validator, :integer?}, {Validator, :arbitrary?}]}
        ]},
       {"grid-column-start",
        [
@@ -308,7 +382,8 @@ defmodule TailwindMerge.Config do
       {"grid-row",
        [
          "row-auto",
-         {"row-span", ["full", {Validator, :integer?}, {Validator, :arbitrary?}]}
+         {"row-span", ["full", {Validator, :integer?}, {Validator, :arbitrary?}]},
+         {"row", ["auto", {Validator, :integer?}, {Validator, :arbitrary?}]}
        ]},
       {"grid-row-start",
        [
@@ -356,19 +431,21 @@ defmodule TailwindMerge.Config do
        ]},
       {"align-content",
        [
+         {"content", ~w(normal center start end between around evenly baseline stretch)},
          {"align-content", ~w(normal center start end between around evenly baseline stretch)}
        ]},
       {"align-items",
        [
-         {"items", ~w(start end center baseline stretch)}
+         {"items", ~w(start end center baseline baseline-last stretch center-safe end-safe)}
        ]},
       {"align-self",
        [
-         {"self", ~w(auto start end center stretch baseline)}
+         {"self", ~w(auto start end center stretch baseline baseline-last)}
        ]},
       {"place-content",
        [
-         {"place-content", ~w(center start end between around evenly baseline stretch)}
+         {"place-content",
+          ~w(center start end between around evenly baseline stretch center-safe end-safe)}
        ]},
       {"place-items",
        [
@@ -408,6 +485,14 @@ defmodule TailwindMerge.Config do
        [
          {"pb", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
        ]},
+      {"padding-block-start",
+       [
+         {"pbs", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"padding-block-end",
+       [
+         {"pbe", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
       {"padding-left",
        [
          {"pl", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
@@ -443,6 +528,14 @@ defmodule TailwindMerge.Config do
       {"margin-bottom",
        [
          {"mb", ["px", "auto", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"margin-block-start",
+       [
+         {"mbs", ["px", "auto", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"margin-block-end",
+       [
+         {"mbe", ["px", "auto", {Validator, :number?}, {Validator, :arbitrary?}]}
        ]},
       {"margin-left",
        [
@@ -527,6 +620,7 @@ defmodule TailwindMerge.Config do
             "auto",
             "full",
             "screen",
+            "lh",
             "svh",
             "lvh",
             "dvh",
@@ -545,6 +639,7 @@ defmodule TailwindMerge.Config do
             "px",
             "full",
             "screen",
+            "lh",
             "svh",
             "lvh",
             "dvh",
@@ -563,6 +658,7 @@ defmodule TailwindMerge.Config do
             "none",
             "full",
             "screen",
+            "lh",
             "svh",
             "lvh",
             "dvh",
@@ -587,15 +683,105 @@ defmodule TailwindMerge.Config do
             {Validator, :arbitrary?}
           ]}
        ]},
+      {"inline-size",
+       [
+         {"inline",
+          [
+            "px",
+            "auto",
+            "full",
+            "screen",
+            "svw",
+            "lvw",
+            "dvw",
+            "min",
+            "max",
+            "fit",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"block-size",
+       [
+         {"block",
+          [
+            "px",
+            "auto",
+            "full",
+            "screen",
+            "lh",
+            "svh",
+            "lvh",
+            "dvh",
+            "min",
+            "max",
+            "fit",
+            {Validator, :number?},
+            {Validator, :ratio?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"min-inline-size",
+       [
+         {"min-inline",
+          ["auto", "full", "min", "max", "fit", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"max-inline-size",
+       [
+         {"max-inline",
+          ["none", "full", "min", "max", "fit", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"min-block-size",
+       [
+         {"min-block",
+          [
+            "auto",
+            "full",
+            "lh",
+            "min",
+            "max",
+            "fit",
+            {Validator, :number?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
+      {"max-block-size",
+       [
+         {"max-block",
+          [
+            "none",
+            "full",
+            "lh",
+            "min",
+            "max",
+            "fit",
+            {Validator, :number?},
+            {Validator, :arbitrary?}
+          ]}
+       ]},
 
       # Typography
       {"font-family",
        [
-         {"font", ~w(sans serif mono)}
+         {"font",
+          [
+            {Validator, :arbitrary_variable_family_name?},
+            {Validator, :arbitrary_family_name?},
+            "sans",
+            "serif",
+            "mono"
+          ]}
        ]},
       {"font-size",
        [
-         {"text", ["base", {Validator, :size_abbr?}, {Validator, :arbitrary_length?}]}
+         {"text",
+          [
+            "base",
+            {Validator, :size_abbr?},
+            {Validator, :arbitrary_variable_size?},
+            {Validator, :arbitrary_length?}
+          ]}
        ]},
       {"font-smoothing", ~w(antialiased subpixel-antialiased)},
       {"font-style", ~w(italic not-italic)},
@@ -612,8 +798,30 @@ defmodule TailwindMerge.Config do
             "bold",
             "extrabold",
             "black",
+            {Validator, :arbitrary_variable_weight?},
+            {Validator, :arbitrary_weight?}
+          ]}
+       ]},
+      {"font-stretch",
+       [
+         {"font-stretch",
+          [
+            "ultra-condensed",
+            "extra-condensed",
+            "condensed",
+            "semi-condensed",
+            "normal",
+            "semi-expanded",
+            "expanded",
+            "extra-expanded",
+            "ultra-expanded",
+            {Validator, :percent?},
             {Validator, :arbitrary?}
           ]}
+       ]},
+      {"font-features",
+       [
+         {"font-features", [{Validator, :arbitrary?}]}
        ]},
       {"fvn-normal", ~w(normal-nums)},
       {"fvn-ordinal", ~w(ordinal)},
@@ -710,7 +918,7 @@ defmodule TailwindMerge.Config do
        ]},
       {"text-transform", ~w(uppercase lowercase capitalize normal-case)},
       {"text-overflow", ~w(truncate text-ellipsis text-clip)},
-      {"text-wrap", ~w(wrap nowrap balance pretty)},
+      {"text-wrap", [{"wrap", ~w(wrap nowrap normal balance pretty break-word anywhere)}]},
       {"text-indent",
        [
          {"indent",
@@ -749,7 +957,7 @@ defmodule TailwindMerge.Config do
        ]},
       {"content",
        [
-         {"content", ["none", {Validator, :arbitrary?}]}
+         {"content", ["none", {Validator, :arbitrary_variable?}, {Validator, :arbitrary?}]}
        ]},
 
       # Backgrounds
@@ -771,7 +979,9 @@ defmodule TailwindMerge.Config do
        ]},
       {"background-position",
        [
-         {"bg", @positions ++ [{Validator, :arbitrary_position?}]}
+         {"bg",
+          @positions ++
+            [{Validator, :arbitrary_variable_position?}, {Validator, :arbitrary_position?}]}
        ]},
       {"background-repeat",
        [
@@ -781,12 +991,26 @@ defmodule TailwindMerge.Config do
        ]},
       {"background-size",
        [
-         {"bg", ["auto", "cover", "contain", {Validator, :arbitrary_length?}]}
+         {"bg",
+          [
+            "auto",
+            "cover",
+            "contain",
+            {Validator, :arbitrary_variable_size?},
+            {Validator, :arbitrary_size?}
+          ]}
        ]},
       {"background-image",
        [
          "bg-none",
-         {"bg-gradient-to", ~w(t tr r br b bl l tl)}
+         {"bg-gradient-to", ~w(t tr r br b bl l tl)},
+         {"bg-linear-to", ~w(t tr r br b bl l tl r)},
+         {"bg-linear",
+          [{Validator, :number?}, {Validator, :arbitrary_variable?}, {Validator, :arbitrary?}]},
+         {"bg-radial", ["", {Validator, :arbitrary_variable?}, {Validator, :arbitrary?}]},
+         {"bg-conic",
+          [{Validator, :number?}, {Validator, :arbitrary_variable?}, {Validator, :arbitrary?}]},
+         {"bg", [{Validator, :arbitrary_variable_image?}, {Validator, :arbitrary_image?}]}
        ]},
       {"gradient-from",
        [
@@ -916,6 +1140,16 @@ defmodule TailwindMerge.Config do
          "border-e",
          {"border-e", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
        ]},
+      {"border-width-bs",
+       [
+         "border-bs",
+         {"border-bs", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
+       ]},
+      {"border-width-be",
+       [
+         "border-be",
+         {"border-be", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
+       ]},
       {"border-width-t",
        [
          "border-t",
@@ -955,6 +1189,14 @@ defmodule TailwindMerge.Config do
       {"border-color-e",
        [
          {"border-e", colors}
+       ]},
+      {"border-color-bs",
+       [
+         {"border-bs", colors}
+       ]},
+      {"border-color-be",
+       [
+         {"border-be", colors}
        ]},
       {"border-color-t",
        [
@@ -1036,6 +1278,15 @@ defmodule TailwindMerge.Config do
        [
          {"ring", colors}
        ]},
+      {"inset-ring-width",
+       [
+         "inset-ring",
+         {"inset-ring", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
+       ]},
+      {"inset-ring-color",
+       [
+         {"inset-ring", colors}
+       ]},
       {"ring-offset-width",
        [
          {"ring-offset", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
@@ -1053,7 +1304,23 @@ defmodule TailwindMerge.Config do
       {"box-shadow",
        [
          "shadow",
-         {"shadow", ["none", "inner", {Validator, :size_abbr?}, {Validator, :arbitrary?}]}
+         {"shadow",
+          [
+            "none",
+            "inner",
+            {Validator, :size_abbr?},
+            {Validator, :arbitrary_variable_shadow?},
+            {Validator, :arbitrary_shadow?}
+          ]}
+       ]},
+      {"text-shadow-color",
+       [
+         {"text-shadow", colors}
+       ]},
+      {"text-shadow",
+       [
+         "text-shadow",
+         {"text-shadow", ["none", {Validator, :size_abbr?}, {Validator, :arbitrary?}]}
        ]},
       {"opacity",
        [
@@ -1069,10 +1336,82 @@ defmodule TailwindMerge.Config do
          {"bg-blend",
           ~w(normal multiply screen overlay darken lighten color-dodge color-burn hard-light soft-light difference exclusion hue saturation color luminosity)}
        ]},
+      {"mask-composite",
+       [
+         {"mask", ~w(add subtract intersect exclude)}
+       ]},
+      {"mask-position",
+       [
+         {"mask", @positions ++ [{Validator, :arbitrary_position?}]},
+         {"mask-position", [{Validator, :arbitrary_position?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-size",
+       [
+         {"mask", ["auto", "cover", "contain", {Validator, :arbitrary_length?}]},
+         {"mask-size", ["auto", "cover", "contain", {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image",
+       [
+         "mask-none",
+         {"mask", [{Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-linear",
+       [
+         {"mask-linear", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-linear-from",
+       [
+         {"mask-linear-from", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-linear-to",
+       [
+         {"mask-linear-to", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-linear-from-color",
+       [
+         {"mask-linear-from-color", colors ++ [{Validator, :integer?}]}
+       ]},
+      {"mask-image-linear-to-color",
+       [
+         {"mask-linear-to-color", colors ++ [{Validator, :integer?}]}
+       ]},
+      {"mask-image-t-from",
+       [
+         {"mask-t-from", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-t-to",
+       [
+         {"mask-t-to", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-t-from-color",
+       [
+         {"mask-t-from-color", colors ++ [{Validator, :integer?}]}
+       ]},
+      {"mask-image-radial",
+       [
+         {"mask-radial", [{Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-radial-from",
+       [
+         {"mask-radial-from", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-radial-to",
+       [
+         {"mask-radial-to", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"mask-image-radial-from-color",
+       [
+         {"mask-radial-from-color", colors ++ [{Validator, :integer?}]}
+       ]},
+      {"mask-type",
+       [
+         {"mask-type", ~w(alpha luminance)}
+       ]},
 
       # Filters
       {"filter",
        [
+         "filter",
          "filter-none"
        ]},
       {"blur",
@@ -1087,6 +1426,10 @@ defmodule TailwindMerge.Config do
       {"contrast",
        [
          {"contrast", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"drop-shadow-color",
+       [
+         {"drop-shadow", colors}
        ]},
       {"drop-shadow",
        [
@@ -1118,6 +1461,7 @@ defmodule TailwindMerge.Config do
        ]},
       {"backdrop-filter",
        [
+         "backdrop-filter",
          "backdrop-filter-none"
        ]},
       {"backdrop-blur",
@@ -1214,9 +1558,12 @@ defmodule TailwindMerge.Config do
       ## Transforms
       {"transform",
        [
+         "transform",
          "transform-none",
          "transform-cpu",
-         "transform-gpu"
+         "transform-gpu",
+         "transform-flat",
+         "transform-3d"
        ]},
       {"scale",
        [
@@ -1232,7 +1579,24 @@ defmodule TailwindMerge.Config do
        ]},
       {"rotate",
        [
-         {"rotate", [{Validator, :integer?}, {Validator, :arbitrary?}]}
+         {"rotate", ["none", {Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"rotate-x",
+       [
+         {"rotate-x", ["none", {Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"rotate-y",
+       [
+         {"rotate-y", ["none", {Validator, :integer?}, {Validator, :arbitrary?}]}
+       ]},
+      {"perspective",
+       [
+         {"perspective",
+          ["none", "dramatic", "near", "normal", "midrange", "distant", {Validator, :arbitrary?}]}
+       ]},
+      {"perspective-origin",
+       [
+         {"perspective-origin", @positions ++ [{Validator, :arbitrary?}]}
        ]},
       {"translate-x",
        [
@@ -1289,6 +1653,14 @@ defmodule TailwindMerge.Config do
       {"appearance",
        [
          {"appearance", ["auto", "none"]}
+       ]},
+      {"field-sizing",
+       [
+         {"field-sizing", ["fixed", "content"]}
+       ]},
+      {"color-scheme",
+       [
+         {"scheme", ["normal", "light", "dark", "light-dark", "only-light", "only-dark"]}
        ]},
       {"cursor",
        [
@@ -1378,6 +1750,14 @@ defmodule TailwindMerge.Config do
        [
          {"scroll-mb", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
        ]},
+      {"scroll-margin-bs",
+       [
+         {"scroll-mbs", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"scroll-margin-be",
+       [
+         {"scroll-mbe", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
       {"scroll-margin-l",
        [
          {"scroll-ml", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
@@ -1413,6 +1793,14 @@ defmodule TailwindMerge.Config do
       {"scroll-padding-b",
        [
          {"scroll-pb", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"scroll-padding-bs",
+       [
+         {"scroll-pbs", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
+       ]},
+      {"scroll-padding-be",
+       [
+         {"scroll-pbe", ["px", {Validator, :number?}, {Validator, :arbitrary?}]}
        ]},
       {"scroll-padding-l",
        [
@@ -1474,7 +1862,12 @@ defmodule TailwindMerge.Config do
        ]},
       {"svg-stroke-width",
        [
-         {"stroke", [{Validator, :integer?}, {Validator, :arbitrary_length?}]}
+         {"stroke",
+          [
+            {Validator, :integer?},
+            {Validator, :arbitrary_number?},
+            {Validator, :arbitrary_length?}
+          ]}
        ]},
 
       # Accessibility
@@ -1490,19 +1883,27 @@ defmodule TailwindMerge.Config do
     [
       {"overflow", ~w(overflow-x overflow-y)},
       {"overscroll", ~w(overscroll-x overscroll-y)},
-      {"inset", ~w(inset-x inset-y top right bottom left)},
+      {"inset",
+       ~w(inset-x inset-y inset-inline-start inset-inline-end inset-s inset-e inset-bs inset-be top right bottom left)},
       {"inset-x", ~w(right left)},
       {"inset-y", ~w(top bottom)},
+      {"inset-s", ~w(inset-inline-start)},
+      {"inset-e", ~w(inset-inline-end)},
+      {"inset-inline-start", ~w(inset-s)},
+      {"inset-inline-end", ~w(inset-e)},
       {"flex", ~w(flex-basis flex-grow flex-shrink)},
       {"grid-column", ~w(grid-column-start grid-column-end)},
       {"grid-row", ~w(grid-row-start grid-row-end)},
       {"gap", ~w(gap-x gap-y)},
-      {"padding", ~w(padding-x padding-y padding-top padding-bottom padding-left padding-right)},
+      {"size", ~w(width height)},
+      {"padding",
+       ~w(padding-x padding-y padding-inline-start padding-inline-end padding-block-start padding-block-end padding-top padding-bottom padding-left padding-right)},
       {"padding-x", ~w(padding-left padding-right)},
-      {"padding-y", ~w(padding-top padding-bottom)},
-      {"margin", ~w(margin-x margin-y margin-top margin-bottom margin-left margin-right)},
+      {"padding-y", ~w(padding-top padding-bottom padding-block-start padding-block-end)},
+      {"margin",
+       ~w(margin-x margin-y margin-inline-start margin-inline-end margin-block-start margin-block-end margin-top margin-bottom margin-left margin-right)},
       {"margin-x", ~w(margin-left margin-right)},
-      {"margin-y", ~w(margin-top margin-bottom)},
+      {"margin-y", ~w(margin-top margin-bottom margin-block-start margin-block-end)},
       {"font-size", ~w(line-height)},
       {"fvn-normal", ~w(fvn-ordinal fvn-slashed-zero fvn-figure fvn-spacing fvn-fraction)},
       {"fvn-ordinal", ~w(fvn-normal)},
@@ -1511,25 +1912,43 @@ defmodule TailwindMerge.Config do
       {"fvn-spacing", ~w(fvn-normal)},
       {"fvn-fraction", ~w(fvn-normal)},
       {"border-radius",
-       ~w(border-radius-t border-radius-r border-radius-b border-radius-l border-radius-tl border-radius-tr border-radius-br border-radius-bl)},
+       ~w(border-radius-s border-radius-e border-radius-t border-radius-r border-radius-b border-radius-l border-radius-ss border-radius-se border-radius-ee border-radius-es border-radius-tl border-radius-tr border-radius-br border-radius-bl)},
+      {"border-radius-s", ~w(border-radius-ss border-radius-es)},
+      {"border-radius-e", ~w(border-radius-se border-radius-ee)},
       {"border-radius-t", ~w(border-radius-tl border-radius-tr)},
       {"border-radius-r", ~w(border-radius-tr border-radius-br)},
       {"border-radius-b", ~w(border-radius-br border-radius-bl)},
       {"border-radius-l", ~w(border-radius-tl border-radius-bl)},
-      {"border-width", ~w(border-width-t border-width-r border-width-b border-width-l)},
+      {"border-width",
+       ~w(border-width-s border-width-e border-width-bs border-width-be border-width-t border-width-r border-width-b border-width-l)},
       {"border-width-x", ~w(border-width-r border-width-l)},
-      {"border-width-y", ~w(border-width-t border-width-b)},
-      {"border-color", ~w(border-color-t border-color-r border-color-b border-color-l)},
+      {"border-width-y", ~w(border-width-t border-width-b border-width-bs border-width-be)},
+      {"border-color",
+       ~w(border-color-s border-color-e border-color-bs border-color-be border-color-t border-color-r border-color-b border-color-l)},
       {"border-color-x", ~w(border-color-r border-color-l")},
-      {"border-color-y", ~w(border-color-t border-color-b)},
+      {"border-color-y", ~w(border-color-t border-color-b border-color-bs border-color-be)},
       {"border-spacing", ~w(border-spacing-x border-spacing-y)},
-      {"scroll-m", ~w(scroll-mx scroll-my scroll-mt scroll-mr scroll-mb scroll-ml)},
+      {"scroll-m",
+       ~w(scroll-mx scroll-my scroll-ms scroll-me scroll-margin-bs scroll-margin-be scroll-mt scroll-mr scroll-mb scroll-ml)},
       {"scroll-mx", ~w(scroll-mr scroll-ml)},
-      {"scroll-my", ~w(scroll-mt scroll-mb)},
-      {"scroll-p", ~w(scroll-px scroll-py scroll-pt scroll-pr scroll-pb scroll-pl)},
+      {"scroll-my", ~w(scroll-mt scroll-mb scroll-margin-bs scroll-margin-be)},
+      {"scroll-p",
+       ~w(scroll-px scroll-py scroll-ps scroll-pe scroll-padding-bs scroll-padding-be scroll-pt scroll-pr scroll-pb scroll-pl)},
       {"scroll-px", ~w(scroll-pr scroll-pl)},
-      {"scroll-py", ~w(scroll-pt scroll-pb)}
+      {"scroll-py", ~w(scroll-pt scroll-pb scroll-padding-bs scroll-padding-be)},
+      {"scroll-margin", ~w(scroll-margin-bs scroll-margin-be)},
+      {"scroll-padding", ~w(scroll-padding-bs scroll-padding-be)}
     ]
+  end
+
+  def conflicting_class_group_modifiers do
+    [
+      {"font-size", ["line-height"]}
+    ]
+  end
+
+  def order_sensitive_modifiers do
+    ~w(* ** after backdrop before details-content file first-letter first-line marker placeholder selection)
   end
 
   def colors() do
@@ -1539,7 +1958,8 @@ defmodule TailwindMerge.Config do
       "transparent",
       "black",
       "white",
-      {Validator, :arbitrary_color?}
+      {Validator, :arbitrary_color?},
+      {Validator, :custom_color?}
     ] ++
       Enum.map(
         [

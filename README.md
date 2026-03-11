@@ -3,9 +3,9 @@
 [![CI](https://github.com/cozy-elixir/tailwind_merge/actions/workflows/ci.yml/badge.svg)](https://github.com/cozy-elixir/tailwind_merge/actions/workflows/ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/tailwind_merge.svg)](https://hex.pm/packages/tailwind_merge)
 
-Utility function to efficiently merge Tailwind CSS classes in Elixir without style conflicts.
+Merge Tailwind CSS classes in Elixir without style conflicts.
 
-> Inspired by [tailwind-merge](https://github.com/dcastil/tailwind-merge).
+> Inspired by the upstream JS package, [`tailwind-merge`](https://www.npmjs.com/package/tailwind-merge).
 
 ## Why?
 
@@ -18,13 +18,19 @@ Due to the way the [CSS Cascade](https://developer.mozilla.org/en-US/docs/Web/CS
 <div class={["h-12 bg-red-500", "bg-green-500"]}></div>
 ```
 
-`TailwindMerge` solves this problem by overriding _conflicting classes_ and keeps everything else untouched.
+`TailwindMerge` solves this problem by overriding _conflicting classes_ and keeping everything else untouched.
 
 ```heex
 <div class={TailwindMerge.merge(["h-12 bg-red-500", "bg-green-500"])}></div>
 <% # equals to %>
 <div class="h-12 bg-green-500"></div>
 ```
+
+## Status
+
+- Supports Tailwind CSS v4 merge semantics, with coverage centered on the same core behavior tested by [`tailwind-merge`](https://www.npmjs.com/package/tailwind-merge).
+- Tracks the upstream JS implementation with a growing parity test suite.
+- Preserves the Elixir package's existing config model via `use TailwindMerge` and `TailwindMerge.Config.new/1`.
 
 ## Installation
 
@@ -40,7 +46,78 @@ end
 
 ## Usage
 
-For more information, see the [documentation](https://hexdocs.pm/tailwind_merge).
+Use the default config directly:
+
+```elixir
+TailwindMerge.merge("p-2 p-4")
+# "p-4"
+
+TailwindMerge.merge(["p-2", nil, ["hover:p-2", "hover:p-4"]])
+# "p-2 hover:p-4"
+```
+
+This is usually enough for Phoenix components and HEEx templates:
+
+```heex
+<button class={TailwindMerge.merge(["px-3 py-2", @class, @active && "bg-blue-600"])}>
+  Save
+</button>
+```
+
+## Helper Module
+
+If you want a shorter local helper, define one in your application:
+
+```elixir
+defmodule DemoWeb.ClassHelper do
+  use TailwindMerge
+end
+```
+
+That gives you `DemoWeb.ClassHelper.tw/1`:
+
+```elixir
+DemoWeb.ClassHelper.tw("text-sm text-lg")
+# "text-lg"
+```
+
+## Custom Config
+
+You can keep the default config shape and override parts of it:
+
+```elixir
+defmodule DemoWeb.ClassHelper do
+  colors = TailwindMerge.Config.colors() ++ ["primary", "secondary"]
+  class_groups = TailwindMerge.Config.class_groups(colors: colors)
+
+  use TailwindMerge,
+    as: :merge_class,
+    config: TailwindMerge.Config.new(class_groups: class_groups)
+end
+
+DemoWeb.ClassHelper.merge_class("text-red-500 text-primary")
+# "text-primary"
+```
+
+Prefix support is also available:
+
+```elixir
+defmodule DemoWeb.Tw do
+  use TailwindMerge,
+    config: TailwindMerge.Config.new(prefix: "tw")
+end
+
+DemoWeb.Tw.tw("tw:p-2 tw:p-4")
+# "tw:p-4"
+```
+
+## Notes
+
+- Unknown classes pass through unchanged.
+- Nested class lists, `nil`, and `false` values are ignored in list input.
+- The library focuses on merge behavior parity with the upstream JS package, [`tailwind-merge`](https://www.npmjs.com/package/tailwind-merge); JS-specific factory APIs are not part of the Elixir public API.
+
+For more detail, see the [documentation](https://hexdocs.pm/tailwind_merge).
 
 ## Similar projects
 
