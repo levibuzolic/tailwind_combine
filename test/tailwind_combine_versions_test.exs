@@ -1,5 +1,5 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeVersionsTest do
+defmodule TailwindCombineVersionsTest do
   @moduledoc """
   Port of upstream `tailwind-css-versions.test.ts`.
 

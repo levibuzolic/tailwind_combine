@@ -1,9 +1,9 @@
-defmodule TailwindMerge.Config do
+defmodule TailwindCombine.Config do
   @moduledoc """
   Provides config.
   """
 
-  alias TailwindMerge.Validator
+  alias TailwindCombine.Validator
 
   defstruct [
     :prefix,

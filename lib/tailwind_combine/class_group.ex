@@ -1,6 +1,6 @@
-defmodule TailwindMerge.ClassGroup do
+defmodule TailwindCombine.ClassGroup do
   @moduledoc false
-  alias TailwindMerge.Config
+  alias TailwindCombine.Config
 
   @unknown nil
 

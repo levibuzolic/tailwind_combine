@@ -1,5 +1,5 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeParityTest do
+defmodule TailwindCombineParityTest do
   @moduledoc """
   Behavioral parity checks ported from the upstream JS test suite.
 

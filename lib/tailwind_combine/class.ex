@@ -1,4 +1,4 @@
-defmodule TailwindMerge.Class do
+defmodule TailwindCombine.Class do
   @moduledoc false
 
   defstruct [:original, :base, :group, :modifiers, :important, :postfix]
@@ -368,6 +368,6 @@ defmodule TailwindMerge.Class do
   defp arbitrary_modifier?(_modifier), do: false
 end
 
-defimpl String.Chars, for: TailwindMerge.Class do
-  def to_string(%TailwindMerge.Class{original: original}), do: original
+defimpl String.Chars, for: TailwindCombine.Class do
+  def to_string(%TailwindCombine.Class{original: original}), do: original
 end

@@ -1,5 +1,5 @@
 defmodule TailwindHelper do
   @moduledoc false
 
-  use TailwindMerge, as: :tw
+  use TailwindCombine, as: :tw
 end

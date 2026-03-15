@@ -1,5 +1,5 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeArbitraryValuesTest do
+defmodule TailwindCombineArbitraryValuesTest do
   @moduledoc """
   Additional upstream parity checks for arbitrary values and related utilities.
 

@@ -2,9 +2,9 @@
 
 ## 0.4.0
 
-  - Added a public `TailwindMerge.merge/1` API using the default config.
+  - Added a public `TailwindCombine.merge/1` API using the default config.
   - Expanded Tailwind CSS merge support to align much more closely with the upstream JS package, [`tailwind-merge`](https://www.npmjs.com/package/tailwind-merge), including modern Tailwind v4 semantics.
-  - Added support for prefixed configs via `TailwindMerge.Config.new(prefix: ...)`.
+  - Added support for prefixed configs via `TailwindCombine.Config.new(prefix: ...)`.
   - Improved merge input handling for nested lists with `nil` and `false` values.
   - Greatly expanded parity coverage against the upstream JS test suite.
 

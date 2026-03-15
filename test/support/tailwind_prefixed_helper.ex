@@ -1,5 +1,5 @@
 defmodule TailwindPrefixedHelper do
   @moduledoc false
 
-  use TailwindMerge, as: :tw, config: TailwindMerge.Config.new(prefix: "tw")
+  use TailwindCombine, as: :tw, config: TailwindCombine.Config.new(prefix: "tw")
 end

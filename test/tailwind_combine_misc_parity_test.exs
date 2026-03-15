@@ -1,5 +1,5 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeMiscParityTest do
+defmodule TailwindCombineMiscParityTest do
   @moduledoc """
   Smaller upstream parity checks for standalone classes, non-conflicting cases,
   per-side border colors, and whitespace normalization.
