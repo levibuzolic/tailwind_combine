@@ -1,13 +1,13 @@
-defmodule TailwindMerge.MixProject do
+defmodule TailwindCombine.MixProject do
   use Mix.Project
 
   @version "0.4.0"
   @description "Utility function to efficiently merge Tailwind CSS classes in Elixir without style conflicts."
-  @source_url "https://github.com/cozy-elixir/tailwind_merge"
+  @source_url "https://github.com/levibuzolic/tailwind_combine"
 
   def project() do
     [
-      app: :tailwind_merge,
+      app: :tailwind_combine,
       version: @version,
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -42,7 +42,7 @@ defmodule TailwindMerge.MixProject do
 
   defp docs() do
     [
-      main: "TailwindMerge",
+      main: "TailwindCombine",
       source_ref: "v#{@version}",
       source_url: @source_url,
       extras: ["CHANGELOG.md"],
@@ -52,6 +52,7 @@ defmodule TailwindMerge.MixProject do
 
   defp package() do
     [
+      name: "tailwind_combine",
       licenses: ["Apache-2.0", "MIT"],
       links: %{GitHub: @source_url}
     ]

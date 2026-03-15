@@ -1,4 +1,4 @@
-defmodule TailwindMerge.Validator do
+defmodule TailwindCombine.Validator do
   @moduledoc """
   Provides built-in validators.
   """

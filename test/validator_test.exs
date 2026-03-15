@@ -1,8 +1,8 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeValidatorTest do
+defmodule TailwindCombineValidatorTest do
   use ExUnit.Case, async: true
 
-  alias TailwindMerge.Validator
+  alias TailwindCombine.Validator
 
   test "matches upstream validator semantics" do
     assert Validator.any?()

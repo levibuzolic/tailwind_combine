@@ -1,4 +1,4 @@
-defmodule TailwindMerge do
+defmodule TailwindCombine do
   @moduledoc """
   Merge Tailwind CSS classes in Elixir without style conflicts.
 
@@ -6,18 +6,18 @@ defmodule TailwindMerge do
 
   Use the default Tailwind config directly:
 
-      TailwindMerge.merge("p-2 p-4")
+      TailwindCombine.merge("p-2 p-4")
       # "p-4"
 
   Nested class lists are also supported:
 
-      TailwindMerge.merge(["p-2", nil, ["hover:p-2", "hover:p-4"]])
+      TailwindCombine.merge(["p-2", nil, ["hover:p-2", "hover:p-4"]])
       # "p-2 hover:p-4"
 
   To create a dedicated helper module, define one in your project:
 
       defmodule DemoWeb.ClassHelper do
-        use TailwindMerge
+        use TailwindCombine
       end
 
   Then, `DemoWeb.ClassHelper.tw/1` will be available to use.
@@ -32,12 +32,12 @@ defmodule TailwindMerge do
   Let's customize colors to use:
 
       defmodule DemoWeb.ClassHelper do
-        existing_colors = TailwindMerge.Config.colors()
+        existing_colors = TailwindCombine.Config.colors()
         new_colors = existing_colors ++ ["primary", "secondary"]
-        new_class_groups = TailwindMerge.Config.class_groups(colors: new_colors)
+        new_class_groups = TailwindCombine.Config.class_groups(colors: new_colors)
 
-        use TailwindMerge,
-          config: TailwindMerge.Config.new(class_groups: new_class_groups),
+        use TailwindCombine,
+          config: TailwindCombine.Config.new(class_groups: new_class_groups),
           as: :merge_class
       end
 
@@ -48,10 +48,10 @@ defmodule TailwindMerge do
 
   """
 
-  alias TailwindMerge.Config
-  alias TailwindMerge.Class
-  alias TailwindMerge.ClassGroup
-  alias TailwindMerge.DefaultClassGroup
+  alias TailwindCombine.Config
+  alias TailwindCombine.Class
+  alias TailwindCombine.ClassGroup
+  alias TailwindCombine.DefaultClassGroup
 
   defmodule DefaultClassGroup do
     @moduledoc false
@@ -64,7 +64,7 @@ defmodule TailwindMerge do
     config = Keyword.get_lazy(opts, :config, fn -> Macro.escape(Config.new()) end)
     as = Keyword.get(opts, :as, :tw)
 
-    class_group_module = Module.concat(__CALLER__.module, "TailwindMerge.ClassGroup")
+    class_group_module = Module.concat(__CALLER__.module, "TailwindCombine.ClassGroup")
 
     quote do
       defmodule unquote(class_group_module) do
@@ -76,12 +76,12 @@ defmodule TailwindMerge do
       Merges Tailwind CSS classes.
       """
       @spec unquote(as)(binary() | list()) :: binary()
-      def unquote(as)(classes), do: TailwindMerge.merge(classes, unquote(class_group_module))
+      def unquote(as)(classes), do: TailwindCombine.merge(classes, unquote(class_group_module))
     end
   end
 
   @doc """
-  Merges Tailwind CSS classes using the default TailwindMerge config.
+  Merges Tailwind CSS classes using the default TailwindCombine config.
   """
   @spec merge(binary() | list()) :: binary()
   def merge(classes), do: merge(classes, DefaultClassGroup)

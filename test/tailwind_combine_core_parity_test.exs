@@ -1,5 +1,5 @@
 # credo:disable-for-this-file
-defmodule TailwindMergeCoreParityTest do
+defmodule TailwindCombineCoreParityTest do
   @moduledoc """
   Remaining core upstream behavior coverage.
 
@@ -51,7 +51,7 @@ defmodule TailwindMergeCoreParityTest do
   end
 end
 
-defmodule TailwindMergePrefixParityTest do
+defmodule TailwindCombinePrefixParityTest do
   @moduledoc false
 
   use ExUnit.Case
