@@ -64,8 +64,8 @@ The release workflow lives in [`.github/workflows/publish-hex.yml`](./.github/wo
    - verify `HEX_API_KEY` is available
    - verify the release tag matches the version in `mix.exs`
    - run formatting, compile, and test checks
-   - publish the Hex package
-   - publish HexDocs
+   - publish the Hex package from the production environment
+   - publish HexDocs from a dedicated docs environment
 
 ## Notes
 
