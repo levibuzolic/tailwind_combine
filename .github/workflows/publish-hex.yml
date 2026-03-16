@@ -12,6 +12,9 @@ concurrency:
   group: hex-publish-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   publish:
     name: Publish Hex Package + Docs
@@ -66,7 +69,12 @@ jobs:
           fi
 
           TAG_VERSION="${REF_NAME#v}"
-          MIX_VERSION="$(mix run -e 'IO.write(Mix.Project.config()[:version])')"
+          MIX_VERSION="$(sed -nE 's/^  @version \"([^\"]+)\"/\1/p' mix.exs)"
+
+          if [ -z "$MIX_VERSION" ]; then
+            echo "Could not read @version from mix.exs"
+            exit 1
+          fi
 
           test "$TAG_VERSION" = "$MIX_VERSION" || {
             echo "Release tag ($REF_NAME) does not match mix.exs version ($MIX_VERSION)"
