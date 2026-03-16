@@ -96,7 +96,7 @@ jobs:
       - name: Publish package
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-        run: MIX_ENV=prod mix hex.publish --yes
+        run: MIX_ENV=prod mix hex.publish package --yes
 
       - name: Install docs dependencies
         run: MIX_ENV=docs mix deps.get
