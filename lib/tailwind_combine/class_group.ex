@@ -15,7 +15,7 @@ defmodule TailwindCombine.ClassGroup do
     caller_module = __CALLER__.module
     config = Module.get_attribute(__CALLER__.module, :config)
 
-    unless match?(%Config{}, config) do
+    if !match?(%Config{}, config) do
       raise ArgumentError,
             "the `@config` module attribute should be set for `#{inspect(caller_module)}`"
     end
