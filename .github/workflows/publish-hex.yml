@@ -1,0 +1,93 @@
+name: Publish Hex
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hex-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish Hex Package + Docs
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    environment: hex-publish
+    env:
+      ELIXIR_VERSION: "1.19.x"
+      OTP_VERSION: "28.x"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Restore Mix caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-hex-publish-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-hex-publish-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-
+
+      - name: Install Hex and Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Verify Hex API key
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: |
+          if [ -z "${HEX_API_KEY:-}" ]; then
+            echo "::error::Missing HEX_API_KEY secret. Configure the hex-publish environment or repository secret before publishing."
+            exit 1
+          fi
+
+      - name: Ensure release tag matches package version
+        run: |
+          REF_NAME="${{ github.event.release.tag_name }}"
+          if [ -z "$REF_NAME" ]; then
+            REF_NAME="${GITHUB_REF_NAME}"
+          fi
+
+          TAG_VERSION="${REF_NAME#v}"
+          MIX_VERSION="$(mix run -e 'IO.write(Mix.Project.config()[:version])')"
+
+          test "$TAG_VERSION" = "$MIX_VERSION" || {
+            echo "Release tag ($REF_NAME) does not match mix.exs version ($MIX_VERSION)"
+            exit 1
+          }
+
+      - name: Verify formatting
+        run: mix format --check-formatted
+
+      - name: Compile with warnings as errors
+        run: MIX_ENV=test mix compile --warnings-as-errors
+
+      - name: Run test suite
+        run: MIX_ENV=test mix test
+
+      - name: Publish package
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --yes
+
+      - name: Publish docs
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish docs --yes

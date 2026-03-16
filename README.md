@@ -44,6 +44,26 @@ def deps do
 end
 ```
 
+## Releases
+
+Hex releases are automated with GitHub Actions from published GitHub Releases, following the same pattern used in `cinder_ui`.
+
+Set the `HEX_API_KEY` secret on the `hex-publish` environment, or as a repository secret, with a Hex API key that can publish packages. Hex documents the key generation flow here: [Publishing from CI](https://hex.pm/docs/publish).
+
+To publish a new release:
+
+```bash
+git tag v0.4.1
+git push origin v0.4.1
+```
+
+Then publish a GitHub Release for that tag. The workflow will:
+
+- verify the release tag matches the version in `mix.exs`
+- run formatting, compile, and test checks
+- publish the package with `mix hex.publish --yes`
+- publish docs with `mix hex.publish docs --yes`
+
 ## Usage
 
 Use the default config directly:
