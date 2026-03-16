@@ -49,21 +49,17 @@ The release workflow lives in [`.github/workflows/publish-hex.yml`](./.github/wo
    git push origin main
    ```
 
-5. Create and push the version tag:
-
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-
-6. Publish a GitHub Release for that tag:
+5. Publish a GitHub Release:
 
    - open `GitHub -> Releases -> Draft a new release`
-   - select tag `v0.1.0`
+   - enter a new tag, for example `v0.1.0`
+   - set the target to `main`
    - add release notes
    - click `Publish release`
 
-7. GitHub Actions will run `Publish Hex` automatically and:
+   GitHub will create the tag for you when the release is published.
+
+6. GitHub Actions will run `Publish Hex` automatically and:
 
    - verify `HEX_API_KEY` is available
    - verify the release tag matches the version in `mix.exs`
@@ -76,3 +72,4 @@ The release workflow lives in [`.github/workflows/publish-hex.yml`](./.github/wo
 - The workflow ignores GitHub prereleases.
 - The tag must match the version exactly. `v0.1.0` requires `@version "0.1.0"` in `mix.exs`.
 - Hex will reject publishing a version that already exists.
+- If you prefer, you can still create and push the tag manually before publishing the GitHub Release, but it is not required.
