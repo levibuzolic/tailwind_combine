@@ -1,0 +1,78 @@
+# Releasing
+
+This project publishes Hex packages and HexDocs through GitHub Releases and GitHub Actions.
+
+The release workflow lives in [`.github/workflows/publish-hex.yml`](./.github/workflows/publish-hex.yml) and runs when a GitHub Release is published.
+
+## One-time setup
+
+1. Generate a Hex API key that can publish packages:
+
+   ```bash
+   mix local.hex --force
+   mix hex.user key generate --key-name publish-ci --permission api:write
+   ```
+
+2. Add the key to GitHub as the `HEX_API_KEY` secret.
+
+   Recommended location:
+
+   - repository: `Settings -> Environments -> hex-publish`
+   - environment secret name: `HEX_API_KEY`
+
+   Repository-level secrets also work, but the workflow is configured to use the `hex-publish` environment.
+
+## Release flow
+
+1. Update the version in [`mix.exs`](./mix.exs).
+
+   Example:
+
+   ```elixir
+   @version "0.1.0"
+   ```
+
+2. Update the changelog and any release notes.
+
+3. Verify the package locally:
+
+   ```bash
+   mix test
+   mix hex.build
+   ```
+
+4. Commit and push the release changes to `main`:
+
+   ```bash
+   git add mix.exs CHANGELOG.md README.md RELEASING.md .github/workflows/publish-hex.yml
+   git commit -m "Release v0.1.0"
+   git push origin main
+   ```
+
+5. Create and push the version tag:
+
+   ```bash
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+
+6. Publish a GitHub Release for that tag:
+
+   - open `GitHub -> Releases -> Draft a new release`
+   - select tag `v0.1.0`
+   - add release notes
+   - click `Publish release`
+
+7. GitHub Actions will run `Publish Hex` automatically and:
+
+   - verify `HEX_API_KEY` is available
+   - verify the release tag matches the version in `mix.exs`
+   - run formatting, compile, and test checks
+   - publish the Hex package
+   - publish HexDocs
+
+## Notes
+
+- The workflow ignores GitHub prereleases.
+- The tag must match the version exactly. `v0.1.0` requires `@version "0.1.0"` in `mix.exs`.
+- Hex will reject publishing a version that already exists.
