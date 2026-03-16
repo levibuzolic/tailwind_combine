@@ -35,7 +35,7 @@ jobs:
           - {elixir: "1.15.x", otp: "25.x"}
           - {elixir: "1.15.x", otp: "24.x"}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
